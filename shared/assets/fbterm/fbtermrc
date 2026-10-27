@@ -1,0 +1,25 @@
+# fbterm configuration — installed to the user's ~/.fbtermrc by the fbterm module.
+# fbterm draws TrueType fonts directly on the framebuffer, so the console gets
+# crisp, scalable, anti-aliased text that the kernel console cannot do.
+
+# TTF font(s). Put a Nerd Font first if you installed one, e.g.:
+#   font-names=FiraCode Nerd Font Mono,DejaVu Sans Mono
+font-names=DejaVu Sans Mono
+font-size=16
+
+# Let fbterm auto-detect the framebuffer geometry.
+font-width=
+font-height=
+
+# Default fg/bg are palette indices (0-7). fbterm uses the standard ANSI
+# palette; it does not redefine the 16 RGB values. For warm theming at the
+# console, the Gruvbox palette applied by the colors module covers the kernel
+# console; inside fbterm, theme at the app level (e.g. starship, ls colors).
+color-foreground=7
+color-background=0
+
+# Report a capable terminal so apps enable color.
+term=fbterm
+
+# No input method by default.
+input-method=

@@ -1,12 +1,16 @@
-# tty — Debian 控制台美化工具箱
+# tty — 控制台美化工具箱(Debian / Arch)
 
-让无桌面 Debian 的内核控制台(Ctrl+Alt+F1~F6)从"黑底白字、又大又糊"变得清爽现代。
-在 Debian 里 `git clone` 下来就能跑,交互菜单勾选要做哪些。
+让无桌面 Linux 的内核控制台(Ctrl+Alt+F1~F6)从"黑底白字、又大又糊"变得清爽现代。
+`git clone` 下来,进对应发行版的文件夹跑 `install.sh`,交互菜单勾选要做哪些。
 
 ```bash
-git clone <this-repo> tty
-cd tty
-sudo ./install.sh
+git clone <this-repo> tty && cd tty
+
+# Debian:
+sudo ./debian/install.sh
+
+# Arch:
+sudo ./arch/install.sh
 ```
 
 ## 它能做什么
@@ -14,18 +18,18 @@ sudo ./install.sh
 | 模块 | 作用 | 生效时机 |
 |------|------|----------|
 | **分辨率** | 改 GRUB,把 framebuffer 调到 1080p 等,字不再又大又糊 | 重启后 |
-| **字体** | `console-setup` + **Terminus**,清晰点阵字体,可选字号 | 立即 + 开机 |
+| **字体** | 清晰的 **Terminus** 字体(Debian: console-setup;Arch: vconsole + setfont) | 立即 + 开机 |
 | **配色** | 把控制台 16 色重定义为 **Gruvbox**(暖色护眼) | 立即 + 开机 |
 | **Shell** | zsh/fish + **starship** 提示符 + `ripgrep`/`bat`/`fzf`/`zoxide`/`eza` 等现代工具 | 重新登录后 |
-| **kmscon**(高级) | 从源码编译 kmscon,用 **TTF 字体 + 更多颜色** 的控制台接管 **tty2** | 切到 tty2 / 重启 |
+| **fbterm** | framebuffer 终端,用 **TTF 字体**,登录 tty2-6 自动进入 | 切到 tty2 / 重新登录 |
 
 ## 用法
 
 ```bash
-sudo ./install.sh          # 交互菜单(推荐)
-sudo ./install.sh --all    # 跑全部(kmscon 仍二次确认)
-sudo ./install.sh --yes    # 非交互,全取默认值
-./install.sh --dry-run     # 只打印将做的事、不改系统(可非 root,先看看)
+sudo ./<distro>/install.sh          # 交互菜单(推荐)
+sudo ./<distro>/install.sh --all    # 跑全部(fbterm 自启仍会询问)
+sudo ./<distro>/install.sh --yes    # 非交互,全取默认值
+./<distro>/install.sh --dry-run     # 只打印将做的事、不改系统(可非 root,先看看)
 ```
 
 菜单里多选用空格/逗号分隔序号,例如 `1 2 3`,或输入 `all`。
@@ -33,47 +37,59 @@ sudo ./install.sh --yes    # 非交互,全取默认值
 ## 重要说明
 
 - **内核控制台的硬天花板**:只有 16 色、点阵字体、无抗锯齿。分辨率/字体/配色三个模块已经把原生控制台做到极致。
-- **starship 和现代 CLI 工具在纯控制台只有 16 色**,会降级显示。想要真彩色、漂亮 TTF 字体、连字,最划算的是**在 Debian 里开 SSH,从宿主机的现代终端(WezTerm / Kitty / Windows Terminal)连进来**。
-- **kmscon 是突破天花板的办法**,但它不在 Debian 仓库、需源码编译(拉一堆开发依赖、耗时几分钟)。
+- **starship 和现代 CLI 工具在纯控制台只有 16 色**,会降级显示。想要真彩色,从别处 **SSH** 进来用现代终端(WezTerm / Kitty / Windows Terminal)最省事。
+- **fbterm** 用来突破字体天花板:它在 framebuffer 上渲染 **TrueType 字体**(清晰、可缩放、抗锯齿)。但 fbterm 用标准 ANSI 调色板,**不重定义 16 色的 RGB**,所以 Gruvbox 配色主要靠 colors 模块作用于内核控制台;fbterm 里的配色靠 app 级主题(starship、ls 颜色等)。
 
-### kmscon 的安全设计 ⚠️
+### fbterm 的安全设计 ⚠️
 
-替换控制台的 getty 一旦配错有被锁在外面的风险,所以本工具:
+fbterm 由登录 shell 触发(不替换 getty),锁死风险本就低。脚本进一步:
 
-- **只接管 tty2**,`tty1` 永远保持原生 getty。
-- kmscon 启动失败会**自动回滚** tty2 的 getty。
-- 出任何问题,按 **Ctrl+Alt+F1** 切回 tty1 就能正常登录。
+- 自启片段**只在 tty2-6 生效**,`tty1` 永远保持纯控制台做兜底。
+- 片段带守卫:已在 fbterm 内、在 X、或通过 SSH(pts)时都不触发。
+- 出问题按 **Ctrl+Alt+F1** 回 tty1 即可。
 
-安装后按 **Ctrl+Alt+F2** 看 kmscon 效果(首次需重新登录/重启让 `video`、`input` 组权限生效)。想换字体,编辑 `/etc/kmscon/kmscon.conf` 里的 `font-name`(可装 Nerd Font 后填其名字)。
+安装后按 **Ctrl+Alt+F2** 体验(首次需重新登录让 `video` 组生效)。换字体改 `~/.fbtermrc` 的 `font-names`(可装 Nerd Font 后填其名字)。Arch 的 fbterm 在 **AUR**,脚本会用 `paru`/`yay` 安装;没有 AUR 助手时会提示手动装。
 
 ## 还原
 
 全程改动前都会备份到 `backups/<时间戳>/`(含 `manifest.tsv`)。还原:
 
 ```bash
-sudo ./uninstall.sh                 # 还原最近一次
-sudo ./uninstall.sh backups/<时间戳> # 还原指定一次
+sudo ./<distro>/uninstall.sh                 # 还原最近一次
+sudo ./<distro>/uninstall.sh backups/<时间戳> # 还原指定一次
 ```
 
-还原会:按 manifest 恢复被改文件、删除 `tty-colors.service`、把 tty2 还给 getty、重建 grub.cfg 与 initramfs。**不会**自动卸载 apt 包(避免误删),只提示包名。
+还原会:按 manifest 恢复被改文件(含 fbterm 自启片段所在的 profile)、删除 `tty-colors.service`、重建引导产物(Debian: grub + initramfs;Arch: grub + mkinitcpio)。**不会**自动卸载装过的包,避免误删。
+
+## 结构(共享 core + 薄发行版层)
+
+```
+shared/
+  common.sh            日志 / 备份+manifest / 幂等改配置 / 托管块(发行版无关)
+  install-core.sh      入口主流程(菜单/调度/小结),两发行版共用
+  uninstall-core.sh    还原主流程,两发行版共用
+  modules/
+    resolution.sh      GRUB 分辨率(两发行版一致)
+    colors.sh          Gruvbox 配色(两发行版一致)
+    fbterm.sh          fbterm 安装/配置/自启(两发行版一致,装包走 aur_install)
+  assets/
+    vtrgb/gruvbox          Gruvbox 调色板
+    starship/starship.toml 提示符预设
+    fbterm/fbtermrc        fbterm 配置(TTF 字体)
+debian/
+  install.sh uninstall.sh  薄入口
+  pkg.sh                   apt 层(pkg_install / BAT_BIN=batcat / FD_BIN=fdfind …)
+  modules/{font,shell}.sh  Debian 特有(console-setup / apt 包名 / starship 官方脚本)
+arch/
+  install.sh uninstall.sh  薄入口
+  pkg.sh                   pacman+AUR 层(pkg_install / aur_install / BAT_BIN=bat …)
+  modules/{font,shell}.sh  Arch 特有(vconsole+setfont / pacman 包名 / starship 仓库包)
+```
+
+**发行版解耦**:`shared/` 的 core 与通用模块只调用 `pkg_detect` / `pkg_install` / `aur_install` 和二进制名变量 `BAT_BIN`/`FD_BIN`,具体由各发行版 `pkg.sh` 实现,所以通用逻辑不重复。
 
 ## 自定义
 
-- **配色**:改 `assets/vtrgb/gruvbox`(setvtrgb 格式:3 行 = 红/绿/蓝,每行 16 个 0-255 值),重跑配色模块。
-- **提示符**:改 `assets/starship/starship.toml`。
-- **kmscon**:改 `assets/kmscon/kmscon.conf`(字体、字号、palette)。
-
-## 目录结构
-
-```
-install.sh / uninstall.sh   入口
-lib/common.sh               日志 / 备份+manifest / apt / 幂等工具(其余模块都依赖)
-lib/{resolution,font,colors,shell,kmscon}.sh   各模块
-assets/vtrgb/gruvbox        Gruvbox 调色板
-assets/starship/starship.toml   提示符预设
-assets/kmscon/kmscon.conf   kmscon 配置
-```
-
-## 兼容性
-
-面向 **Debian**(stable/testing)。`eza` 等个别工具在 Debian 12 stable 仓库可能缺失,脚本会跳过并提示,不影响其余功能。
+- **配色**:改 `shared/assets/vtrgb/gruvbox`(3 行 = 红/绿/蓝,每行 16 个 0-255 值),重跑配色模块。
+- **提示符**:改 `shared/assets/starship/starship.toml`。
+- **fbterm 字体**:改 `shared/assets/fbterm/fbtermrc` 的 `font-names` / `font-size`,或直接改 `~/.fbtermrc`。

@@ -5,6 +5,11 @@
 export BAT_BIN="bat"
 export FD_BIN="fd"
 
+# CJK (Chinese) font for fbterm — noto-fonts-cjk is in the official repos.
+# Package name + the family name to put in ~/.fbtermrc.
+export CJK_FONT_PKG="noto-fonts-cjk"
+export CJK_FONT_NAME="Noto Sans Mono CJK SC"
+
 pkg_detect() {
   if [ -f /etc/arch-release ] && have pacman; then
     return 0

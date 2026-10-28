@@ -43,6 +43,19 @@ module_fbterm() {
     ok "已写入 $home/.fbtermrc(字体改这里的 font-names)"
   fi
 
+  # Optional CJK font so fbterm can display Chinese (the kernel console can't).
+  if confirm "安装中文字体并让 fbterm 能显示中文吗?" "y"; then
+    if pkg_install "$CJK_FONT_PKG"; then
+      # Put a latin font first, CJK as fallback — fbterm takes a comma list.
+      set_kv_in_file "$home/.fbtermrc" "font-names" "DejaVu Sans Mono,$CJK_FONT_NAME"
+      ok "fbterm 已配置中文字体:$CJK_FONT_NAME"
+    else
+      warn "中文字体($CJK_FONT_PKG)安装失败,fbterm 里中文可能仍是方框。"
+    fi
+  else
+    warn "未装中文字体;纯控制台与未配置的 fbterm 都无法显示中文。"
+  fi
+
   # Optional guarded autostart.
   if confirm "登录 tty2-6 时自动进入 fbterm 吗?(tty1 保持纯控制台做兜底)" "y"; then
     local profile; profile="$(_fbterm_profile_for "$home" "$ushell")"

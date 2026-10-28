@@ -7,6 +7,11 @@
 export BAT_BIN="batcat"
 export FD_BIN="fdfind"
 
+# CJK (Chinese) font for fbterm — the kernel console can't show CJK, but fbterm
+# renders TTF so it can. Package name + the family name to put in ~/.fbtermrc.
+export CJK_FONT_PKG="fonts-wqy-microhei"
+export CJK_FONT_NAME="WenQuanYi Micro Hei Mono"
+
 pkg_detect() {
   if [ -f /etc/debian_version ] && have apt-get; then
     return 0

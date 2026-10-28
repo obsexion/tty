@@ -7,7 +7,7 @@
 # install.sh wrappers stay thin.
 #
 # Modules expected to be defined before sourcing:
-#   module_resolution module_font module_colors module_shell module_fbterm
+#   module_resolution module_font module_colors module_shell module_tools module_fbterm
 # and the package interface from pkg.sh: pkg_detect / pkg_install / aur_install.
 
 NEED_REBOOT=0
@@ -22,7 +22,7 @@ _core_usage() {
   ./install.sh --dry-run       只打印将执行的动作,不改系统(可非 root)
   ./install.sh --help
 
-模块:分辨率 / 字体 / 配色 / Shell / fbterm
+模块:分辨率 / 字体 / 配色 / Shell / 工具 / fbterm
 EOF
   exit 0
 }
@@ -51,7 +51,7 @@ core_main() {
   # --- pick modules ---------------------------------------------------------
   local SELECTED=""
   if [ "$RUN_ALL" = "1" ]; then
-    SELECTED="resolution font colors shell fbterm"
+    SELECTED="resolution font colors shell tools fbterm"
   else
     cat <<'MENU'
 
@@ -60,13 +60,14 @@ core_main() {
   2) 字体     Terminus 清晰点阵字体
   3) 配色     Gruvbox 16 色调色板
   4) Shell    zsh/fish + starship + 现代 CLI 工具
-  5) fbterm   framebuffer 终端:TTF 字体,自启于 tty2-6
+  5) 工具     选装开发/网络/编辑器/TTY增强工具 + 命令速查
+  6) fbterm   framebuffer 终端:TTF 字体,自启于 tty2-6
 MENU
     local ans n
     read -r -p "你的选择 [1 2 3]: " ans
     ans="${ans:-1 2 3}"
     if [ "$ans" = "all" ]; then
-      SELECTED="resolution font colors shell fbterm"
+      SELECTED="resolution font colors shell tools fbterm"
     else
       for n in ${ans//,/ }; do
         case "$n" in
@@ -74,7 +75,8 @@ MENU
           2) SELECTED+=" font" ;;
           3) SELECTED+=" colors" ;;
           4) SELECTED+=" shell" ;;
-          5) SELECTED+=" fbterm" ;;
+          5) SELECTED+=" tools" ;;
+          6) SELECTED+=" fbterm" ;;
           *) warn "忽略无效选项:$n" ;;
         esac
       done
@@ -88,6 +90,7 @@ MENU
   run_if font       module_font
   run_if colors     module_colors
   run_if shell      module_shell
+  run_if tools      module_tools
   run_if fbterm     module_fbterm
 
   # --- summary --------------------------------------------------------------

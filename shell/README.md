@@ -1,9 +1,12 @@
-# shell — 常用脚本
+# shell — 常用脚本 + 命令速查
 
-存放平时常用的独立 shell 脚本(自包含,不依赖本仓库其它部分)。
+[English](README.en.md) | 中文
 
-| 脚本 | 作用 |
+存放平时常用的独立 shell 脚本(自包含,不依赖本仓库其它部分),以及一份常用命令速查。
+
+| 文件 | 作用 |
 |------|------|
+| [CHEATSHEET.md](CHEATSHEET.md) | 常用 shell 命令速查(TTY 切换、文件/文本/进程/网络/systemd/tmux/git/vim)。「工具」模块会把它装到 `~/.local/share/tty-cheatsheet.md` 并加 `cheat` 命令,随时打开 |
 | [sudo-nopasswd.sh](sudo-nopasswd.sh) | 让指定用户用 sudo 时免密:先写 `/etc/sudoers.d/` drop-in 并**清缓存真测**,被覆盖则**自动回退**追加到 `/etc/sudoers` 末尾;全程 `visudo` 校验,支持 `--undo` |
 
 ## sudo-nopasswd.sh

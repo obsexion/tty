@@ -10,6 +10,60 @@ export FD_BIN="fd"
 export CJK_FONT_PKG="noto-fonts-cjk"
 export CJK_FONT_NAME="Noto Sans Mono CJK SC"
 
+# --- optional tools map (used by shared/modules/tools.sh) --------------------
+# Generic tool key -> pacman package name(s). The shared tools module only
+# knows keys; distro package names live here. A key absent from this map is
+# skipped with a warning. Arch ships almost everything in the official repos.
+declare -gA TOOL_PKG=(
+  [git]="git"
+  [buildtools]="base-devel"
+  [make]="make"
+  [cmake]="cmake"
+  [python]="python python-pip"
+  [nodejs]="nodejs npm"
+  [go]="go"
+  [rust]="rustup"
+  [gdb]="gdb"
+  [jq]="jq"
+  [shellcheck]="shellcheck"
+  [curl]="curl"
+  [wget]="wget"
+  [openssh]="openssh"
+  [nmap]="nmap"
+  [net-tools]="net-tools"
+  [iproute2]="iproute2"
+  [dig]="bind"
+  [mtr]="mtr"
+  [traceroute]="traceroute"
+  [tcpdump]="tcpdump"
+  [rsync]="rsync"
+  [whois]="whois"
+  [socat]="socat"
+  [netcat]="openbsd-netcat"
+  [iftop]="iftop"
+  [nload]="nload"
+  [nano]="nano"
+  [vim]="vim"
+  [neovim]="neovim"
+  [micro]="micro"
+  [helix]="helix"
+  [emacs]="emacs-nox"
+  [tmux]="tmux"
+  [gpm]="gpm"
+  [htop]="htop"
+  [btop]="btop"
+  [ncdu]="ncdu"
+  [tldr]="tealdeer"
+  [tree]="tree"
+  [duf]="duf"
+  [dust]="dust"
+  [procs]="procs"
+  [delta]="git-delta"
+)
+# AUR-only tools (installed via aur_install). Empty by default; add keys here
+# for anything not in the official repos.
+declare -gA TOOL_AUR=()
+
 pkg_detect() {
   if [ -f /etc/arch-release ] && have pacman; then
     return 0

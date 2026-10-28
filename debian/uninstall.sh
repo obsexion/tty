@@ -1,8 +1,8 @@
 #!/usr/bin/env bash
-# uninstall.sh (Debian) — 还原本工具做过的改动(薄封装)。
-# 用法:
-#   sudo ./uninstall.sh            还原最近一次备份
-#   sudo ./uninstall.sh <备份目录>  还原指定 backups/<时间戳>
+# uninstall.sh (Debian) — restore the changes this tool made (thin wrapper).
+# Usage:
+#   sudo ./uninstall.sh            restore the most recent backup
+#   sudo ./uninstall.sh <backup-dir>  restore a specific backups/<timestamp>
 set -euo pipefail
 
 REPO_ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"

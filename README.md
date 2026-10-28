@@ -1,5 +1,7 @@
 # tty — 控制台美化工具箱(Debian / Arch)
 
+[English](README.en.md) | 中文
+
 让无桌面 Linux 的内核控制台(Ctrl+Alt+F1~F6)从"黑底白字、又大又糊"变得清爽现代。
 `git clone` 下来,进对应发行版的文件夹跑 `install.sh`,交互菜单勾选要做哪些。
 
@@ -21,6 +23,7 @@ sudo ./arch/install.sh
 | **字体** | 清晰的 **Terminus** 字体(Debian: console-setup;Arch: vconsole + setfont) | 立即 + 开机 |
 | **配色** | 把控制台 16 色重定义为 **Gruvbox**(暖色护眼) | 立即 + 开机 |
 | **Shell** | zsh/fish + **starship** 提示符 + `ripgrep`/`bat`/`fzf`/`zoxide`/`eza` 等现代工具 | 重新登录后 |
+| **工具** | 按分类**逐项勾选**装开发/网络/编辑器/TTY 增强工具,设默认编辑器,装命令速查 | 立即 + 新开 shell |
 | **fbterm** | framebuffer 终端,用 **TTF 字体**,登录 tty2-6 自动进入 | 切到 tty2 / 重新登录 |
 
 ## 用法
@@ -33,6 +36,29 @@ sudo ./<distro>/install.sh --yes    # 非交互,全取默认值
 ```
 
 菜单里多选用空格/逗号分隔序号,例如 `1 2 3`,或输入 `all`。
+
+## 选装工具(TTY 体验优化)
+
+「工具」模块让你**按分类逐项勾选**要装的东西(先选分类,再在分类里用序号多选):
+
+| 分类 | 内容 |
+|------|------|
+| **开发工具** | git、构建工具链(gcc/make)、cmake、python、nodejs、go、rust、gdb、jq、shellcheck |
+| **网络工具** | curl、wget、openssh、nmap、net-tools、iproute2、dig、mtr、traceroute、tcpdump、rsync、whois、socat、netcat、iftop、nload |
+| **编辑器** | nano、vim、neovim、micro、helix、emacs-nox |
+| **TTY 增强** | **tmux**(单控制台分屏/回滚/会话)、**gpm**(控制台鼠标:选区复制 + 滚轮)、htop、btop、ncdu |
+| **现代 CLI 扩展** | tldr、tree、duf、dust、procs、git-delta |
+
+包名的发行版差异(如 `build-essential`↔`base-devel`、`dnsutils`↔`bind`、`netcat-openbsd`↔`openbsd-netcat`、`tldr`↔`tealdeer`)都由各发行版的 `pkg.sh` 映射;本发行版没有的包(如 Debian stable 的 helix/dust/procs)会自动跳过并提示。
+
+这个模块专门针对**纯 TTY 体验**做了优化:
+
+- **默认编辑器**:选了编辑器后,可把其中一个设为 `$EDITOR`/`$VISUAL`;并给 vim/neovim 装一份 **16 色、开启鼠标**的极简配置。
+- **tmux**:随附 `~/.tmux.conf`,开好鼠标、5 万行回滚、`|` 竖分 `-` 横分 —— 在单个控制台里也能分屏、滚屏、挂后台。
+- **gpm**:纯内核控制台里用上鼠标(选区复制、滚轮翻页),装完自动 `systemctl enable --now gpm`。
+- **命令速查**:把 [shell/CHEATSHEET.md](shell/CHEATSHEET.md) 装到用户目录并加 `cheat` 命令,随时翻常用命令;可选装 `tldr` 查单条命令的用法示例(离线)。
+
+> 现代 CLI 的基线(ripgrep/fd/bat/fzf/zoxide/eza)仍由 **Shell** 模块安装,「工具」模块只做额外选装,两者互不影响。非交互(`--yes`/`--all`)时「工具」模块装一份推荐集:git、curl、wget、openssh、tmux、gpm、htop、vim、tldr、tree。
 
 ## 重要说明
 
@@ -77,19 +103,25 @@ shared/
   modules/
     resolution.sh      GRUB 分辨率(两发行版一致)
     colors.sh          Gruvbox 配色(两发行版一致)
+    tools.sh           选装工具(分类逐项勾选)+ 默认编辑器 + tmux/gpm + 命令速查
     fbterm.sh          fbterm 安装/配置/自启(两发行版一致,装包走 aur_install)
   assets/
     vtrgb/gruvbox          Gruvbox 调色板
     starship/starship.toml 提示符预设
     fbterm/fbtermrc        fbterm 配置(TTF 字体)
+    tmux/tmux.conf         tmux 预设(鼠标 + 大回滚 + 16 色状态栏)
+    editor/vimrc           vim 极简 TTY 配置    editor/init.vim  neovim 极简配置
 debian/
   install.sh uninstall.sh  薄入口
-  pkg.sh                   apt 层(pkg_install / BAT_BIN=batcat / FD_BIN=fdfind …)
+  pkg.sh                   apt 层(pkg_install / BAT_BIN=batcat … + TOOL_PKG 工具映射)
   modules/{font,shell}.sh  Debian 特有(console-setup / apt 包名 / starship 官方脚本)
 arch/
   install.sh uninstall.sh  薄入口
-  pkg.sh                   pacman+AUR 层(pkg_install / aur_install / BAT_BIN=bat …)
+  pkg.sh                   pacman+AUR 层(pkg_install/aur_install … + TOOL_PKG/TOOL_AUR 映射)
   modules/{font,shell}.sh  Arch 特有(vconsole+setfont / pacman 包名 / starship 仓库包)
+shell/
+  CHEATSHEET.md            常用命令速查(工具模块装到用户目录,cheat 命令打开)
+  sudo-nopasswd.sh         免密 sudo 脚本
 ```
 
 **发行版解耦**:`shared/` 的 core 与通用模块只调用 `pkg_detect` / `pkg_install` / `aur_install` 和二进制名变量 `BAT_BIN`/`FD_BIN`,具体由各发行版 `pkg.sh` 实现,所以通用逻辑不重复。
@@ -99,3 +131,6 @@ arch/
 - **配色**:改 `shared/assets/vtrgb/gruvbox`(3 行 = 红/绿/蓝,每行 16 个 0-255 值),重跑配色模块。
 - **提示符**:改 `shared/assets/starship/starship.toml`。
 - **fbterm 字体**:改 `shared/assets/fbterm/fbtermrc` 的 `font-names` / `font-size`,或直接改 `~/.fbtermrc`。
+- **工具清单**:增删工具改各发行版 `pkg.sh` 的 `TOOL_PKG`(新增 key 时在 `shared/modules/tools.sh` 的分类数组里加一行 `"key|标签"`)。
+- **tmux / 编辑器预设**:改 `shared/assets/tmux/tmux.conf`、`shared/assets/editor/{vimrc,init.vim}`,或直接改用户目录下对应文件。
+- **命令速查**:改 `shell/CHEATSHEET.md`,重跑工具模块会重新装到用户目录。

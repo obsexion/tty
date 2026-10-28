@@ -12,6 +12,56 @@ export FD_BIN="fdfind"
 export CJK_FONT_PKG="fonts-wqy-microhei"
 export CJK_FONT_NAME="WenQuanYi Micro Hei Mono"
 
+# --- optional tools map (used by shared/modules/tools.sh) --------------------
+# Generic tool key -> apt package name(s). The shared tools module only knows
+# keys; the distro-specific package names live here. A key absent from this
+# map is skipped with a warning (e.g. helix/dust/procs are not in Debian stable).
+declare -gA TOOL_PKG=(
+  [git]="git"
+  [buildtools]="build-essential"
+  [make]="make"
+  [cmake]="cmake"
+  [python]="python3 python3-pip python3-venv"
+  [nodejs]="nodejs npm"
+  [go]="golang"
+  [rust]="rustc cargo"
+  [gdb]="gdb"
+  [jq]="jq"
+  [shellcheck]="shellcheck"
+  [curl]="curl"
+  [wget]="wget"
+  [openssh]="openssh-client openssh-server"
+  [nmap]="nmap"
+  [net-tools]="net-tools"
+  [iproute2]="iproute2"
+  [dig]="dnsutils"
+  [mtr]="mtr-tiny"
+  [traceroute]="traceroute"
+  [tcpdump]="tcpdump"
+  [rsync]="rsync"
+  [whois]="whois"
+  [socat]="socat"
+  [netcat]="netcat-openbsd"
+  [iftop]="iftop"
+  [nload]="nload"
+  [nano]="nano"
+  [vim]="vim"
+  [neovim]="neovim"
+  [micro]="micro"
+  [emacs]="emacs-nox"
+  [tmux]="tmux"
+  [gpm]="gpm"
+  [htop]="htop"
+  [btop]="btop"
+  [ncdu]="ncdu"
+  [tldr]="tldr"
+  [tree]="tree"
+  [duf]="duf"
+  [delta]="git-delta"
+)
+# Debian has no AUR; declared empty so tools.sh can reference it uniformly.
+declare -gA TOOL_AUR=()
+
 pkg_detect() {
   if [ -f /etc/debian_version ] && have apt-get; then
     return 0

@@ -1,18 +1,18 @@
 #!/usr/bin/env bash
-# sudo-nopasswd.sh — 让指定用户使用 sudo 时无需输入密码(带真实验证 + 自动回退)。
+# sudo-nopasswd.sh — let a given user run sudo without a password (with real verification + auto fallback).
 #
-# 做法:优先用 /etc/sudoers.d/ drop-in;装完后**清缓存真测一次**,若被其它
-# 规则覆盖(常见:/etc/sudoers 里有匹配规则排在 @includedir 之后),则**自动
-# 回退到把规则追加到 /etc/sudoers 末尾**(保证最后匹配生效)。全程 visudo 校验。
+# How: prefer an /etc/sudoers.d/ drop-in; after installing, **clear the cache and really test once**; if
+# some other rule overrides it (commonly: /etc/sudoers has a matching rule ordered after @includedir),
+# **fall back to appending the rule to the end of /etc/sudoers** (so the last match wins). visudo-validated throughout.
 #
-# ⚠️ 免密 sudo 会降低安全性:任何能用你账号的人都能直接拿到 root。
-#    只建议在自己的单人机器/虚拟机上用。
+# ⚠️ Passwordless sudo lowers security: anyone who can use your account gets root directly.
+#    Only recommended on your own single-user machine / VM.
 #
-# 用法:
-#   sudo ./sudo-nopasswd.sh              # 给当前用户开启免密
-#   sudo ./sudo-nopasswd.sh -u alice     # 给指定用户开启
-#   sudo ./sudo-nopasswd.sh --undo       # 关闭(清掉 drop-in 与主 sudoers 里的规则)
-#   ./sudo-nopasswd.sh --dry-run         # 只打印将做的事,不改系统
+# Usage:
+#   sudo ./sudo-nopasswd.sh              # enable passwordless sudo for the current user
+#   sudo ./sudo-nopasswd.sh -u alice     # enable it for a specific user
+#   sudo ./sudo-nopasswd.sh --undo       # disable (remove the drop-in and the rule in the main sudoers)
+#   ./sudo-nopasswd.sh --dry-run         # only print what it would do, change nothing
 #   ./sudo-nopasswd.sh -h
 
 set -euo pipefail
@@ -47,9 +47,9 @@ fi
 id "$TARGET" >/dev/null 2>&1 || { echo "用户不存在:$TARGET" >&2; exit 1; }
 
 SUDOERS="/etc/sudoers"
-DROPIN="/etc/sudoers.d/99-${TARGET}-nopasswd"     # 99- 让它排到 drop-in 靠后
+DROPIN="/etc/sudoers.d/99-${TARGET}-nopasswd"     # 99- sorts it late among drop-ins
 LEGACY_DROPIN="/etc/sudoers.d/90-${TARGET}-nopasswd"
-MARKER="# tty-nopasswd: ${TARGET}"                # 主 sudoers 里的标记,便于 --undo
+MARKER="# tty-nopasswd: ${TARGET}"                # marker in the main sudoers, for easy --undo
 RULE="${TARGET} ALL=(ALL:ALL) NOPASSWD: ALL"
 BACKUP_DIR="/var/backups/sudo-nopasswd"
 
@@ -64,7 +64,7 @@ need_root() {
   fi
 }
 
-# 真正验证:以目标用户身份、清掉缓存后测 sudo 是否免密。0=免密生效。
+# Real verification: as the target user, clear the cache and test whether sudo is passwordless. 0 = passwordless works.
 verify_nopasswd() {
   [ "$DRY_RUN" = "1" ] && return 0
   runuser -l "$TARGET" -c 'sudo -k; sudo -n true' >/dev/null 2>&1
@@ -75,7 +75,7 @@ backup_sudoers() {
   run cp -a "$SUDOERS" "$BACKUP_DIR/sudoers.$(date +%Y%m%d-%H%M%S)"
 }
 
-# 写一个 sudoers 文件前先在临时文件上 visudo 校验,过了才原子落位。
+# Before writing a sudoers file, validate on a temp file with visudo; only then atomically install it.
 install_validated() {  # <content-producer-cmd writes to $1> <dest> <mode>
   local dest="$2" mode="$3" tmp
   tmp="$(mktemp)"
@@ -90,9 +90,9 @@ install_validated() {  # <content-producer-cmd writes to $1> <dest> <mode>
   install -m "$mode" -o root -g root "$tmp" "$dest"
 }
 
-# 内容生产者:drop-in(单行规则)
+# Content producer: drop-in (single-line rule)
 _gen_dropin() { printf '%s\n' "$RULE" > "$1"; }
-# 内容生产者:主 sudoers 追加(先去掉旧标记块,再在末尾加)
+# Content producer: append to the main sudoers (strip any old marker block first, then append)
 _gen_main_append() {
   cp -a "$SUDOERS" "$1"
   sed -i "/^${MARKER}$/,+1d" "$1" 2>/dev/null || true
@@ -109,7 +109,7 @@ append_to_main() {
   install_validated _gen_main_append "$SUDOERS" 0440
 }
 
-# 返回 0 = 确实删了;返回 1 = 没有本工具的规则可删。
+# returns 0 = actually removed something; returns 1 = no rule from this tool to remove.
 remove_from_main() {
   [ -f "$SUDOERS" ] || return 1
   grep -q "^${MARKER}$" "$SUDOERS" 2>/dev/null || return 1
@@ -146,7 +146,7 @@ if [ "$DRY_RUN" != "1" ]; then
   case "${ans:-n}" in [Yy]*) ;; *) echo "已取消。"; exit 0 ;; esac
 fi
 
-# 1) 优先 drop-in
+# 1) prefer the drop-in
 echo "[1/2] 写入 drop-in:$DROPIN"
 if [ "$DRY_RUN" = "1" ]; then
   echo "[dry-run] 写入 $DROPIN(visudo 校验后,0440):$RULE"
@@ -161,10 +161,10 @@ if verify_nopasswd; then
   exit 0
 fi
 
-# 2) drop-in 被覆盖 → 回退到主 sudoers 末尾(保证最后匹配生效)
+# 2) drop-in overridden → fall back to the end of the main sudoers (so the last match wins)
 echo "[2/2] drop-in 未生效(被其它规则覆盖),回退:追加到 $SUDOERS 末尾…"
 append_to_main
-# 主 sudoers 已是权威规则,删掉 drop-in 避免重复来源
+# the main sudoers is now authoritative; remove the drop-in to avoid a duplicate source
 run rm -f "$DROPIN"
 
 if verify_nopasswd; then

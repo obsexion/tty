@@ -1,0 +1,29 @@
+" tty-beautify minimal Vim config — tuned for the TTY (16 colors) and daily edits.
+" Installed to the user's ~/.vimrc (the original is backed up first). No plugins.
+
+set nocompatible
+syntax on
+filetype plugin indent on
+
+set number                      " line numbers
+set showcmd
+set ruler
+set laststatus=2
+
+set hlsearch                    " search highlight + incremental
+set incsearch
+set ignorecase                  " smart case
+set smartcase
+
+set expandtab                   " indent with spaces, width 4
+set shiftwidth=4
+set softtabstop=4
+set autoindent
+
+set wildmenu                    " command-line completion menu
+set backspace=indent,eol,start
+
+set mouse=a                     " mouse (works in the TTY together with gpm)
+
+set t_Co=16                     " the bare console has only 16 colors; avoid color breakage
+set background=dark

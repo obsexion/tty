@@ -51,4 +51,6 @@ module_font() {
   _arch_add_consolefont_hook
 
   ok "字体已设为 $font(立即生效;下次开机同样生效)。"
+  warn "注意:Terminus 不含中文字形,纯内核控制台也显示不了 CJK —— 中文会变方框。"
+  warn "需要在控制台看中文,请用 fbterm 模块(它能装中文 TTF 字体)。"
 }

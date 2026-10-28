@@ -50,6 +50,12 @@ fbterm 由登录 shell 触发(不替换 getty),锁死风险本就低。脚本进
 
 安装后按 **Ctrl+Alt+F2** 体验(首次需重新登录让 `video` 组生效)。换字体改 `~/.fbtermrc` 的 `font-names`(可装 Nerd Font 后填其名字)。Arch 的 fbterm 在 **AUR**,脚本会用 `paru`/`yay` 安装;没有 AUR 助手时会提示手动装。
 
+### 中文(CJK)显示
+
+**纯内核控制台无法显示中文** —— 它一次只能加载最多 ~512 个字形的点阵字体,而中文有几千个字;Terminus 更是完全不含中文字形,所以装了字体模块后中文会变方框。这是控制台的天生限制,不是 bug。
+
+想在控制台看中文,用 **fbterm**:它渲染 TTF,能显示 CJK。fbterm 模块会询问是否安装中文字体(Debian: `fonts-wqy-microhei`;Arch: `noto-fonts-cjk`),选「是」后自动把 `~/.fbtermrc` 的 `font-names` 配成「拉丁字体 + 中文字体」,进 fbterm 即可正常显示中文。或者直接从宿主机 **SSH** 进来,终端模拟器原生支持中文。
+
 ## 还原
 
 全程改动前都会备份到 `backups/<时间戳>/`(含 `manifest.tsv`)。还原:
